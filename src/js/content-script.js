@@ -113,27 +113,36 @@
         }
     }
 
-    async function selectWordHandler(e) {
-        e.preventDefault();
+    function selectWordHandler(e) {
+        try {
+            if (popuped) return;
 
-        // if event not left click, omit 
-        if (e.which != 1) {
-            return;
+            let selection = window.getSelection();
+            let selectedText = selection.toString().trim();
+
+            // 如果没有选中文本，隐藏支持元素
+            if (!selectedText) {
+                $supportElement.hide();
+                return;
+            }
+
+            // 更新支持元素位置
+            $supportElement.updatePosition();
+            $supportElement.display();
+
+            // 根据触发模式决定如何显示
+            if (triggerMode == TRIGGER_MODE.DIRECT) {
+                popup(selectedText);
+            } else if (triggerMode == TRIGGER_MODE.SHOW_ICON) {
+                // 不再判断文本长度，直接显示图标
+                $supportElement.createIconTips(
+                    () => popup(selectedText),
+                    () => $supportElement.hide()
+                );
+            }
+        } catch (error) {
+            console.error('Error handling text selection:', error);
         }
-
-        let selectedContent = window.getSelection().toString().trim();        
-
-        if (popuped || selectedContent == '') {            
-            return;
-        }
-
-        if (selectedContent.length > 300) {
-            return;
-        }
-
-        prepopup();
-
-        (await canPopup()) && popup(selectedContent);
     }
 
     function prepopup() {
@@ -170,6 +179,7 @@
         // 销毁上一个 $popover
         $popover && $popover.destory();
 
+        // 根据内容类型决定使用哪种弹出框
         if (isChineseWord(content) || isEnglishWord(content)) {
             popupWordWebuiPopover(content);
         } else {
@@ -178,12 +188,13 @@
     }
 
     function isChineseWord(str) {
-        return str.length <= 8 && 
-            str.split('').every(char => /\p{Script=Han}/u.test(char));
+        // 放宽对中文的限制
+        return str.split('').every(char => /\p{Script=Han}/u.test(char));
     }
 
     function isEnglishWord(str) {
-        let englishWordRegex = /^[a-zA-Z\\-]+$/;
+        // 只检查是否主要包含英文字符，不再限制长度
+        let englishWordRegex = /^[a-zA-Z\\-\\s]+$/;
         return englishWordRegex.test(str);
     }
 
@@ -230,10 +241,12 @@
             }, 100);
         })
         .catch(e => {
-            console.error(e);
+            console.error('Translation error:', e);
             $supportElement.$el.css('display', 'none');
-            $supportElement.$el.trigger('baicizhanHelper:alert', ['翻译失败，稍后再试']);
-        })
+            $supportElement.$el.trigger('baicizhanHelper:alert', [
+                e.message || '翻译服务暂时不可用，请稍后再试'
+            ]);
+        });
     }
 
     function sendRequest(option) {

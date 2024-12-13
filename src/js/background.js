@@ -57,7 +57,19 @@
     function(global) {
         'use strict';
 
-        importScripts('storage.js', 'wordbook-storage.js', 'api.js');        
+        importScripts(
+            'storage.js', 
+            'wordbook-storage.js', 
+            'api.js',
+            'services/translate-service.js'
+        );        
+
+        console.log('Loaded modules:', {
+            storage: !!global.storageModule,
+            wordbook: !!global.wordbookStorageModule,
+            api: !!global.apiModule,
+            translate: !!global.translationService
+        });
 
         return {
             getStorageInfo: global.storageModule.getStorageInfo,

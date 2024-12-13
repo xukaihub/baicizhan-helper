@@ -78,40 +78,7 @@
     }
 
     function translate(phrase) {
-        return loadRequestOptions().then(([host, port, accessToken]) => {
-            const url = `http://${host}:${port}/translate`;
-
-            return fetch(url, {
-                method: 'POST',
-                mode: 'cors',
-                headers: {
-                    'access_token': accessToken,
-                    'content-type': 'application/json',
-                },
-                body: JSON.stringify({
-                    q: phrase,
-                    source: "auto",
-                    target: isEnglishPhrase(phrase) ? 'zh' : 'en',
-                    format: 'text',
-                }),
-            })
-            .then(response => response.json())
-            .catch(e => reject(e));
-        });
-    }
-
-    function isEnglishPhrase(phrase) {
-        let len = 0, characterSize = 0;
-
-        for (let c of Array.from(phrase)) {
-            if (c === ' ') continue;
-
-            len++;
-
-            if (c >= 'A' && c <= 'z') characterSize++;
-        }
-
-        return characterSize / len > 0.7;
+        return global.translationService.translate(phrase);
     }
 
     function getWordDetail(topicId, withDict = true, withMedia = false, withSimilarWords = false) {
